@@ -1,18 +1,18 @@
-function [xmin,path,iter] = graddescent( f, n, varargin )
-%GRADDESCENT Gradient Descent minimization algorithm
-%   xmin = GRADDESCENT(f, n, ....) 
+function [xmin,path,iter] = stochdescent( f, n, varargin )
+%STOCHDESCENT Stochastic Gradient Descent minimization algorithm
+%   xmin = STOCHDESCENT(f, n, ....) 
 %       computes the mininum of the function f with ninp amount of inputs
 %       using the given parameters
 %
-%   xmin = GRADDESCENT(f, n, start, ....)
+%   xmin = STOCHDESCENT(f, n, start, ....)
 %       computes the mininum of the function f with ninp amount of inputs
 %       using the given parameters, and starting at the given start point.
 %
-%   [xmin,path] = graddescent(f, ninp, ....)
+%   [xmin,path] = STOCHDESCENT(f, ninp, ....)
 %       computes the minimum using the given arguments and stores the path 
 %       traveled in the path variable
 %
-%   [xmin,path,iter] = graddescent(f, ninp, ...)
+%   [xmin,path,iter] = STOCHDESCENT(f, ninp, ...)
 %       computes the minimum using the given arguments, stores the path 
 %       traveled in the path variable, and returns the number of iterations
 %       made.
@@ -25,13 +25,13 @@ function [xmin,path,iter] = graddescent( f, n, varargin )
 %
 %   Example:
 %       f = @(x) 0.5 * (x(:,1).^2 + x(:,2).^2);
-%       xmin = GRADDESCENT(f,2);
+%       xmin = STOCHDESCENT(f,2);
 %
 %   Example (plot using a wrapper function):
 %       Z = @(x,y) 0.5 * ( x.^2 + y.^2 );
 %
 %       f = @(x) Z(x(:,1),x(:,2)); 
-%       [xmin, path] = GRADDESCENT(f,2);
+%       [xmin, path] = STOCHDESCENT(f,2);
 %
 %       [X,Y] = meshgrid(-10:10);
 %       contour(X,Y,Z(X,Y)); hold on;
@@ -39,7 +39,7 @@ function [xmin,path,iter] = graddescent( f, n, varargin )
 %
 %   Example (with parameters and a starting location):
 %       f = @(x) 0.5 * (x(:,1).^4 + x(:,1).^2 + x(:,2).^2);
-%       xmin = GRADDESCENT(f,2,[0,0],'alpha',1e-4,'epsilon',1e-9)
+%       xmin = STOCHDESCENT(f,2,[0,0],'alpha',1e-4,'epsilon',1e-9)
 
 % Init input parser
 p = inputParser;
@@ -62,6 +62,7 @@ parse(p,f,n,varargin{:});
 
 % Get algorithm parameters
 f       = p.Results.f;
+n       = p.Results.n;
 alpha   = p.Results.alpha;
 epsilon = p.Results.epsilon;
 sample  = p.Results.sample;
@@ -69,22 +70,28 @@ maxiter = p.Results.maxiter;
 
 % Initialize algorithm
 xmin = p.Results.start; % Initial xmin
-delt = epsilon + 1;     % Initial delta
+g    = grad(f,xmin);    % Initial gradient
+delt = epsilon + 1;
 path = xmin;            % Start path
 iter = 0;               % Iteration
 
 % Until slope becomes level
-while sqrt(sum(delt.^2)) > epsilon && iter < maxiter
+while delt > epsilon && iter < maxiter
     % Step in negative
-    delt = alpha*grad(f,xmin);
-    xmin = xmin - delt;
+    delt                  = alpha*g(mod(iter,n) + 1);
+    xmin(mod(iter,n) + 1) = xmin(mod(iter,n) + 1) - delt;
     
     % Increment iter
     iter = iter + 1;
     
+    % Recalculate gradient if iterated through all directions
+    if mod(iter,n) == 0; g = grad(f,xmin); end;
+    
     % Add xmin sample to path if sample time has passed
     if mod(iter,sample) == 0; path = [path; xmin]; end
 end
+
+
 
 end
 

@@ -8,7 +8,7 @@
 %% Section 1: Parameters
 
 % Optimizer
-optimizer = @graddescent;
+optimizer = @stochdescent;
 
 % Target function
 Z = @(x,y) 0.5 * (2*x.^4 - 2*x.^2 + 0.5*x.*y + 2*y.^2);
