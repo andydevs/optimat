@@ -1,10 +1,10 @@
-function g = grad(f, x, h)
+function G = grad(f, x, h)
 %GRAD The gradient of a function at an x
-%   g = GRAD(f,x) 
+%   G = GRAD(f,x) 
 %       computes the gradient of the given function at the given x
 %       (h defaults to 1e-3)
 % 
-%   g = GRAD(f,x,h) 
+%   G = GRAD(f,x,h) 
 %       computes the gradient of the given function at the guven x
 %       with the given h
 %
@@ -18,12 +18,17 @@ function g = grad(f, x, h)
 % Default h = 1e-3
 if (nargin < 3); h = 1e-3; end
 
-% Create D and X matrix
-D = h*eye(length(x));
-X = meshgrid(x);
+% Init gradient and D matrix
+G = zeros(size(x));
+D = h*eye(size(x,2));
 
-% Compute all gradients (transpose)
-g = ((f(X+D) - f(X))/h)';
+for i = 1:size(x,1)
+    % Create meshgrid of X
+    X = meshgrid(x(i,:));
+    
+    % Compute gradient by summation
+    G(i,:) = (f(X+D) - f(X))'/h;
+end
 
 end
 
