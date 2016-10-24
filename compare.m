@@ -2,17 +2,24 @@
 % Author:  Anshul Kharbanda
 % Created: 10 - 24 - 2016
 %
-% Compares two optimization algorithms, plotting both paths through a curve 
-% and changes in minimum value over time.
+% Compares two optimization algorithms, plotting both paths through 
+% a curve and changes in minimum value over time.
 
-%% Section 1: Parameters
+%% Section 1: Optimizers
 
-% Optimizers
-name1      = 'Batch Gradient Descent';
-optimizer1 = @graddescent;
+% Optimizer 1
+opters(1).name = 'Batch Gradient Descent';
+opters(1).func = @graddescent;
 
-name2      = 'Stochastic Gradient Descent';
-optimizer2 = @stochdescent;
+% Optimizer 2
+opters(2).name = 'Stochastic Gradient Descent';
+opters(2).func = @stochdescent;
+
+% Optimizer 3
+opters(3).name = 'Newton''s Method';
+opters(3).func = @newton;
+
+%% Section 2: Parameters
 
 % Target function
 Z = @(x,y) 0.5 * (2*x.^4 - 2*x.^2 + 0.5*x.*y + 2*y.^2);
@@ -24,37 +31,50 @@ n = 2;
 % Algorithm Parameters
 alpha   = 1e-3;
 epsilon = 1e-9;
-start   = [0.1,0.9];
-sample  = 100;
+start   = [-0.45,0.8];
+sample  = 200;
 
-%% Section 2: Execute and Plot
+%% Section 2: Execute
 
-% Get minimum and path
-[xmin1, path1, iter1] = optimizer1(f,n,start,'alpha',alpha,'epsilon',epsilon,'sample',sample);
-[xmin2, path2, iter2] = optimizer2(f,n,start,'alpha',alpha,'epsilon',epsilon,'sample',sample);
+% Cell Array of Parameters
+params = {f, n, start, ...
+    'alpha', alpha, 'epsilon', epsilon, 'sample', sample};
 
-% Display data from optimizers
-disp(name1);
-disp(['  xmin: ' num2str(xmin1)]);
-disp(['  iterations: ' num2str(iter1)]);
-disp(name2);
-disp(['  xmin: ' num2str(xmin2)]);
-disp(['  iterations: ' num2str(iter2)]);
+% For each optimizer
+for i = 1:length(opters)
+    % Get minimum, path, and iterations
+    [opters(i).xmin, opters(i).path, opters(i).iter] = ...
+        opters(i).func(params{:});
+    
+    % Display iterations, minimum x, and minimum f
+    disp(opters(i).name);
+    disp(['    iterations: ' num2str(opters(i).iter)]);
+    disp(['    xmin: '       num2str(opters(i).xmin)]);
+    disp(['    fmin: '       num2str(f(opters(i).xmin))]);
+end
 
-% Plot target function (and path)
-figure;
+%% Section 3: Plot
+
+% Value Space
 [X,Y] = meshgrid(-1:0.01:1);
-contour(X,Y,Z(X,Y),50);hold on;
-plot(path1(:,1),path1(:,2),'r.');
-plot(path2(:,1),path2(:,2),'b.');hold off;
-title('Objective Function with Optimizer Paths');
-legend('Function',name1,name2);
+
+% Plot target function (and paths)
+figure(1);hold on;
+% Contour Map
+contour(X,Y,Z(X,Y),50);
+% Paths for each optimizer
+for opter = opters; plot(opter.path(:,1),opter.path(:,2),'.'); end
+hold off;
+% Graph info
+title('Objective Function with Optimizer Path');
+legend('Function',opters(:).name);
 
 % Plot change in f over samples
-figure;
-plot(f(path1),'r');hold on;
-plot(f(path2),'b');hold off;
+figure(2); hold on;
+% Paths for each optimizer
+for opter = opters; plot(f(opter.path),'.'); end
+hold off;
 title('Value of Objective Function over Samples');
 xlabel(['Samples (1 per ', num2str(sample), ' iterations)']);
 ylabel('Objective Function');
-legend(name1, name2);
+legend(opters(:).name);
